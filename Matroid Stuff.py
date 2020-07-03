@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[130]:
+# In[ ]:
 
 
 # Plot the lattice of flats for Fano and non-Fano
@@ -34,41 +34,52 @@ N_L.flag_f_polynomial()
 N_L.degree_polynomial()
 
 
-# In[145]:
+# In[46]:
 
 
 def get_fan(n):
     # Make fan graph F(1,n) using edges
     edges = [(0,i) for i in range(1, n+1)] + [(i, i+1) for i in range(1, n)]
-
+    
     # Make graph
     g = Graph(edges)    
     F = Matroid(g)
     F_L = F.lattice_of_flats()
+    
+    # Get level sets of lattice
+    level_sets = F_L.level_sets()
+    sizes = [len(level) for level in level_sets]
 
-    # Get rank function and compute number of elements of a given rank
-    rank = F_L.rank_function()
-    vals = [0] * (n+1)
-
-    for elt in F_L.list():
-        vals[rank(elt)] += 1
-
-    print('F(1,{0}):'.format(n), vals)
+    print('F(1,{0}):'.format(n), sizes)
 
 # 8 is as feasible as it gets
 for i in range(1, 6):
     get_fan(i)
 
 
-# In[129]:
+# In[66]:
 
 
-# Plot flats
-F_P = F_L.plot(label_elements=False, vertex_shape='H', vertex_size=800, vertex_colors='white')
-F_P.show(figsize=[15,8])
+# Create some fan graphs
+list_of_fans = []
+n=4
+for m in range(0, n+1):
+    edges = [(0,i) for i in range(1, m+1)] + [(i, i+1) for i in range(1, m)]
+    list_of_fans.append(Matroid(Graph(edges)))
+
+# Get lattices
+lattices_of_fans = [F.lattice_of_flats() for F in list_of_fans]
+
+#print(lattices_of_fans[4].has_isomorphic_subposet(lattices_of_fans[3]))
+
+for L in lattices_of_fans[3].isomorphic_sublattices_iterator(lattices_of_fans[2]):
+    print(L.list())
+
+#F_P = F_L.plot(vertex_shape='H', vertex_size=800, vertex_colors='white')
+#F_P.show(figsize=[20,8])
 
 
-# In[140]:
+# In[2]:
 
 
 # Relax a matroid
@@ -97,9 +108,7 @@ def relax_circuit_hyperplane(M):
 
     # Add it as a basis and create new list
     bases.append(ch)
-    new_bases = []
-    for l in bases:
-        new_bases.append(''.join(l))
+    new_bases = [''.join(l) for l in bases]
     
     return Matroid(bases=new_bases)
 
@@ -122,7 +131,7 @@ if V.is_isomorphic(matroids.named_matroids.Vamos()):
 #    print('Pappus successfully relaxed to NonPappus')
 
 
-# In[141]:
+# In[11]:
 
 
 # MAX CODE FOR TZF
@@ -161,4 +170,20 @@ def tzf(M):
     L = M.lattice_of_flats()
     flags = [c for c in L.chains() if len(c) > 0 and c[0] == L.bottom() and c[-1] == L.top()]
     return sum([xmf1(L,f)*trf(L,f) for f in flags])
+
+
+# In[34]:
+
+
+# Get some TZFs
+for n in range(1,6):
+
+    # Fan graph
+    edges = [(0,i) for i in range(1, n+1)] + [(i, i+1) for i in range(1, n)]
+    g_f = Graph(edges)    
+    print('Fan({0}): '.format(n), tzf(Matroid(g_f)))
+    
+    # Complete graph
+    # g_k = graphs.CompleteGraph(n+1)    
+    # print('Complete({0}): '.format(n+1), tzf(Matroid(g_k)))
 
