@@ -37,10 +37,59 @@ def mrf(L,F):
 def posetify(S):
     return Poset((S,[[a,b] for a in S for b in S if a.issubset(b)]))
 
+# Copute the toplogical zeta function for a matroid M
 def tzf(M):
     L = M.lattice_of_flats()
     flags = [c for c in L.chains() if len(c) > 0 and c[0] == L.bottom() and c[-1] == L.top()]
     return sum([xmf1(L,f)*trf(L,f) for f in flags])
+
+# Compute the characteristic polynomial for a matroid M
+def x_M(M):
+    R.<q> = QQ['q']
+    if M.loops():
+        return 0 * q
+
+    L = M.lattice_of_flats()
+    return L.characteristic_polynomial()
+
+# Compute the reduced characteristic polynomial for a matroid M
+def x_M_reduced(M):
+    R.<q> = QQ['q']
+    if M.loops():
+        return 0 * q
+
+    return x_M(M) / (q-1)
+
+# Compute the toplogical zeta function for a matroid M via the
+# recurrence relation summing over all proper flats
+def tzf_recurrence(M):
+    R.<s> = QQ['s']
+
+    E = M.groundset()
+    rk = M.full_rank()
+    L = M.lattice_of_flats()
+    
+    # Compute base cases where the tzf is simple
+    if (len(E) == 1):
+        return rk * (1/(1+s))
+    elif (len(E) == 0):
+        return 1
+
+    # Sum over all proper flats of L(M)
+    sum_proper_flats = 0
+    for F in L:
+        if F == E:
+            continue
+
+        contraction = M.contract(F)
+        restriction = M.delete(E - F)
+
+        chi = x_M_reduced(contraction)
+        # Recall tzf_recurrence recursively for contracted matroids
+        sum_proper_flats += chi(1) * tzf_recurrence(restriction)
+
+    return 1/(len(E) * s + rk) * sum_proper_flats
+
 
 def mzf(M):
     R.<q,T> = QQ['q,T']

@@ -71,4 +71,4 @@ def check_thag_tzf(n):
 
 	print(difference)
 
-check_thag_tzf(6)
+#check_thag_tzf(6)
