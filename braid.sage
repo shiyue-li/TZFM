@@ -60,7 +60,7 @@ def tzf_braid(n):
 		zetas = 1
 		# dynamically compute the zeta functions in the partition
 		for part in partition:
-			zetas = zetas * braid_tzf[part - 1]
+			zetas = zetas * braid_tzfs[part - 1]
 
 		sum += partition_choose(n, partition) * chi_r * zetas
 
