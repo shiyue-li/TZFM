@@ -8,7 +8,7 @@ def get_braid(n):
 
 # store zeta functions of braid matroids
 # to dynamically compute future zeta functions
-braid_tzf = []
+braid_tzfs = []
 
 # compute the number of ways to choose the number of ways
 # to divide n elements into a partition
@@ -72,7 +72,7 @@ m = 20
 for i in range(1, m + 1):
 	z = tzf_braid(i)
 	#print(z)
-	braid_tzf.append(z)
+	braid_tzfs.append(z)
 
 
 
