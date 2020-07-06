@@ -31,3 +31,19 @@ def compare_derivatives(n, M1, M2=None):
 		Z1 = derivative(Z1,s)
 		Z2 = derivative(Z2,s)
 
+def dependent_sets(M):
+	E = M.groundset()
+	P_E = Subsets(E, submultiset=True)
+
+	dependent_subsets = [0] * (len(E) + 1)
+	for S in P_E:
+		if M.is_dependent(S):
+			#print(S)
+			dependent_subsets[len(S)] += 1
+
+	for i in range(0, len(E) + 1):
+		print('(' + str(dependent_subsets[i]) + ') dependent subsets of cardinality ' + str(i))
+
+
+
+
