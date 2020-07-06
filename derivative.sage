@@ -2,6 +2,8 @@
 # Path may need to be reconfigured for local setup
 load('matroidzeta.sage')
 
+# evaluate the first n derivatives of the tzf of matroid
+# M at 0 and print the results
 def get_derivatives(M, n):
 	R.<s> = QQ['s']
 
