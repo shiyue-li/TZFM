@@ -1,40 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[46]:
+# In[30]:
 
 
-# Create some fan graphs
-list_of_fans = []
-n=5
-for m in range(0, n+1):
-    edges = [(0,i) for i in range(1, m+1)] + [(i, i+1) for i in range(1, m)]
-    list_of_fans.append(Matroid(Graph(edges)))
+from itertools import combinations
 
-# Get lattices
-lattices_of_fans = [F.lattice_of_flats() for F in list_of_fans]    
-    
-def get_fan(n):
-    # Make fan graph F(1,n) using edges
-    edges = [(0,i) for i in range(1, n+1)] + [(i, i+1) for i in range(1, n)]
-    
-    # Make graph
-    g = Graph(edges)    
-    F = Matroid(g)
-    F_L = F.lattice_of_flats()
-    
-    # Get level sets of lattice
-    level_sets = F_L.level_sets()
-    sizes = [len(level) for level in level_sets]
-
-    print('F(1,{0}):'.format(n), sizes)
-
-# 8 is as feasible as it gets
-for i in range(1, 6):
-    get_fan(i)
+load("derivative.sage")
+load("matroidzeta.sage")
 
 
-# In[24]:
+# In[31]:
 
 
 # Relax a matroid
@@ -88,71 +64,64 @@ def relax_circuit_hyperplane(M):
 #    print('Pappus successfully relaxed to NonPappus')
 
 
-# In[3]:
+# In[32]:
 
 
-# MAX CODE FOR TZF
-# given a lattice L and a flag F in L containing at least the min and max
-# of L, xmf(L,F) is the product of reduced characteristic polynomials of
-# intevals in F, and xmf1(L,F) finds the value of this polynomial when you set
-# q = 1.
-
-def xmf(L,F):
-    l = len(F)
-    R.<q> = QQ['q']
-    numerator = product([posetify(L.interval(F[i],F[i+1])).characteristic_polynomial() for i in [0..(l-2)]])
-    denominator = (q - 1)^(l-1)
-    return (numerator/denominator)
-
-def xmf1(L,F):
-    l = len(F)
-    R.<q> = QQ['q']
-    numerator = product([posetify(L.interval(F[i],F[i+1])).characteristic_polynomial() for i in [0..(l-2)]])
-    denominator = (q - 1)^(l-1)
-    return (numerator/denominator)(1)
-
-# given a lattice L and a flag F in L containing at least the min and
-# max of L, trf(L,F) finds the rational function (in the variable s)
-# that you need when building the topological zeta function.
-def trf(L,F):
-    R.<s> = QQ['s']
-    rk = L.rank_function()
-    return product([1/((len(f))*s + rk(f)) for f in F if not f == L.bottom()])
+def dependent_sets_zeta(M, zeta=False):
     
-# Utility: For a set S of subsets, form its associated poset w.r.t. containment
-def posetify(S):
-    return Poset((S,[[a,b] for a in S for b in S if a.issubset(b)]))
-
-def tzf(M):
-    L = M.lattice_of_flats()
-    flags = [c for c in L.chains() if len(c) > 0 and c[0] == L.bottom() and c[-1] == L.top()]
-    return sum([xmf1(L,f)*trf(L,f) for f in flags])
-
-
-# In[29]:
-
-
-# Matroid relax test
-M = matroids.named_matroids.NonVamos()
-print(M)
-MR = relax_circuit_hyperplane(M)
-
-print(tzf(M))
-print(tzf(MR))
-
-
-# In[34]:
-
-
-# Get some TZFs
-for n in range(1,6):
-
-    # Fan graph
-    edges = [(0,i) for i in range(1, n+1)] + [(i, i+1) for i in range(1, n)]
-    g_f = Graph(edges)    
-    print('Fan({0}): '.format(n), tzf(Matroid(g_f)))
+    # Print relevant information
+    print('Dependent sets per cardinality for M({0},{1}):'.format(M.rank(), M.size()), 
+          [len(M.dependent_r_sets(r)) for r in range(0, M.rank()+1)])
     
-    # Complete graph
-    # g_k = graphs.CompleteGraph(n+1)    
-    # print('Complete({0}): '.format(n+1), tzf(Matroid(g_k)))
+    if zeta:
+        print('TZF for M: ', tzf(M))
+
+
+# In[33]:
+
+
+g = Matroid(Graph([(0,1,1), (0,1,2), (0,1,3), (1,2,1), (2,3,1)], multiedges=True))
+dependent_sets_zeta(g, True)
+compare_derivatives(3, g)
+
+
+# In[42]:
+
+
+# Gets all matroids of a given rank and ground set size (up to isomorphism)
+# by checking all possibe basis combinations 
+def get_matroids(r, n):
+    
+    res = []
+    res_2 = []
+    
+    # from itertools
+    sets = combinations(list(range(n)), r)
+    
+    # Iterate through power set of subsets
+    for b in powerset(sets):
+        
+        # Skip empty
+        if not b:
+            continue
+    
+        # Make matroid, see if it is valid
+        M = Matroid(bases=b)
+        if M.is_valid() and M.size() == 5:
+            res.append(M)
+            
+    # Remove isomorphic copies
+    while len(res) > 0:
+        res_2.append(res[0])
+        res = [m for m in res[1:] if not m.is_isomorphic(res[0])]
+
+    return res_2
+
+# Get the set of dependent matroid we would want
+M = get_matroids(3,5)
+M2 = [m for m in M if len(m.dependent_r_sets(2)) > 0]
+  
+for i, m in enumerate(M2):
+    print('Matroid index: {0}'.format(i))
+    compare_derivatives(3, m)
 
