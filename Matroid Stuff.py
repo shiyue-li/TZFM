@@ -107,7 +107,7 @@ def get_matroids(r, n):
     
         # Make matroid, see if it is valid
         M = Matroid(bases=b)
-        if M.is_valid() and M.size() == 5:
+        if M.is_valid() and M.size() == n:
             res.append(M)
             
     # Remove isomorphic copies

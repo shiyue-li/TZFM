@@ -44,6 +44,26 @@ def dependent_sets(M):
 	for i in range(0, len(E) + 1):
 		print('(' + str(dependent_subsets[i]) + ') dependent subsets of cardinality ' + str(i))
 
+def parallel_classes(M):
+	E = M.groundset()
+
+	pc = []
+
+	considered_edges = []
+
+	for e in E:
+		if e not in considered_edges:
+			considered_edges.append(e)
+			c = 1
+			for f in E:
+				if M.is_dependent((e,f)):
+					considered_edges.append(f)
+					c+= 1
+			pc.append(c)
+
+	pc.sort()
+	return pc
+
 
 
 
