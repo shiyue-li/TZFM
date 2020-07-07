@@ -10,10 +10,9 @@ def tzf_wheel(n):
     # prepare the fans for recursion...
     compute_fans(n-1)
 
-    double_sum = 0
+    single_sum = 0
     for k in range(1, n):
-        for c in range(0, n-k):
-            double_sum += binomial(n-1-k, c) * (-1)^(n-k-c-1) * fan_tzfs[k] / (s+1)^c
+        single_sum += ((-s)/(s+1))^(n-k-1) * fan_tzfs[k]
         
     non_fans = 0
     for r in range(0, n-1):
@@ -22,6 +21,6 @@ def tzf_wheel(n):
     # Brute force add cyclic matroid final case
     non_fans += ((-s)^n-1-n*(-s-1)) / ((n*s+n-1) * (s+1)^n)
 
-    total = n * double_sum + non_fans
+    total = n * single_sum + non_fans
 
     return 1/(2*n*s + n) * total
