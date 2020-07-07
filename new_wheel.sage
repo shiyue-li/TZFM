@@ -20,9 +20,20 @@ def tzf_wheel(n):
     for r in range(0, n-1):
         non_fans += binomial(n, r) * (n-1-r) * (-1)^(n-1-r) * 1/(s+1)^r
 
-    # Brute force add cyclic matroid final case
-    non_fans += ((-s)^n-1-n*(-s-1)) / ((n*s+n-1) * (s+1)^n)
+    # Note: the n = 2 triangle is a special case because the edges
+    # around the wheel do not form a closed path
+    if ( n > 2):
+        # Brute force add cyclic matroid final case
+        non_fans += ((-s)^n-1-n*(-s-1)) / ((n*s+n-1) * (s+1)^n)
+    elif (n == 2):
+        non_fans += 1/(1+s)
 
     total = n * double_sum + non_fans
 
-    return 1/(2*n*s + n) * total
+    # scale the sum accordingly by the rank and size of the groundset
+    if (n > 2):
+        total = total * 1/(2*n*s + n)
+    elif (n == 2):
+        total = total / (3*s + 2)
+
+    return total
