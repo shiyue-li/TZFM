@@ -11,9 +11,10 @@ def tzf_wheel(n):
     compute_fans(n-1)
 
     double_sum = 0
+    
     for k in range(1, n):
-        for c in range(0, n-k):
-            double_sum += binomial(n-1-k, c) * (-1)^(n-k-c-1) * fan_tzfs[k] / (s+1)^c
+        summand = ((-1*s)/(s+1))^(n-k-1)*fan_tzfs[k]
+        double_sum += summand
         
     non_fans = 0
     for r in range(0, n-1):
