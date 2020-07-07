@@ -34,8 +34,11 @@ def tzf_fan(n):
 	elif (n == 1):
 		return 1/(1+s)
 
+	# summing over pairs of smaller fans
 	tzf = sum(fan_tzfs[k] * fan_tzfs[n - 1 - k] for k in (0..n-1))
 	tzf = tzf * 1/((2*n-1)*s+n)
+
+	# contribution of previous fan...
 	tzf += ((2*n-3)*s + (n-1))/((2*n-1)*s+n) * (-s/(s+1)) * fan_tzfs[n-1]
 
 	return tzf
