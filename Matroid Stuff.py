@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[30]:
+# In[103]:
 
 
 from itertools import combinations
 
-load("derivative.sage")
-load("matroidzeta.sage")
+load('derivative.sage')
+load('matroidzeta.sage')
+load('fan.sage')
 
 
 # In[31]:
@@ -45,47 +46,56 @@ def relax_circuit_hyperplane(M):
     
     return Matroid(bases=bases)
 
-# cdgh is the circuit-hyperplane to relax to get Vamos from NonVamos
-# NV = matroids.named_matroids.NonVamos()
-# V = relax_circuit_hyperplane(NV)
-# if V.is_isomorphic(matroids.named_matroids.Vamos()):
-#    print('NonVamos successfully relaxed to Vamos')
 
-# Get Pappus
-# P = matroids.named_matroids.Pappus()
-
-# Plot Pappus to find to relax
-# pos = {'a':(0,2), 'b': (1,2), 'c':(2,2), 'd':(0,0), 'e':(1,0), 'f':(2,0), 'g':(.5,1),'h':(1,1), 'i':(1.5,1)}
-# P.plot(pos_method=1, pos_dict=pos)
-
-# Relax Pappus and check
-# NP = relax_circuit_hyperplane(P)
-# if NP.is_isomorphic(matroids.named_matroids.NonPappus()):
-#    print('Pappus successfully relaxed to NonPappus')
-
-
-# In[32]:
+# In[125]:
 
 
 def dependent_sets_zeta(M, zeta=False):
     
-    # Print relevant information
-    print('Dependent sets per cardinality for M({0},{1}):'.format(M.rank(), M.size()), 
-          [len(M.dependent_r_sets(r)) for r in range(0, M.rank()+1)])
+    print('Matroid Rank: {0}, Matroid Size: {1}.'.format(M.rank(), M.size()))
+    print('Entry (i, j) is the number of cardinality j, rank i dependent sets (one indexed):')
+    
+    # Get array of 0s
+    res = [ [0] * (M.rank()+1) for _ in range(M.rank()) ]
+    
+    # Get dependent sets
+    dep_sets = [M.dependent_r_sets(r) for r in range(0, M.rank()+1)]
+    
+    # Split dependent sets by rank
+    for r, dep_set in enumerate(dep_sets):
+        for dep in dep_set:
+            res[M.rank(dep)][r] += 1
+    
+    # Print array
+    for row in res[1:]:
+        print(row[1:])
     
     if zeta:
         print('TZF for M: ', tzf(M))
 
 
-# In[33]:
+# In[126]:
 
 
-g = Matroid(Graph([(0,1,1), (0,1,2), (0,1,3), (1,2,1), (2,3,1)], multiedges=True))
-dependent_sets_zeta(g, True)
-compare_derivatives(3, g)
+g = Graph([(0,1,1), (0,1,2), (0,1,3), (1,2,1), (2,3,1)], multiedges=True)
+g.plot().show()
+m = Matroid(g)
+dependent_sets_zeta(m)
 
 
-# In[42]:
+# In[93]:
+
+
+# Displays a matroid
+def display_matroid(M, d):
+    if M.rank() <= 3:
+        M.plot().show()
+    compare_derivatives(d, M)
+    dependent_sets_zeta(M)
+    print('')
+
+
+# In[127]:
 
 
 # Gets all matroids of a given rank and ground set size (up to isomorphism)
@@ -101,27 +111,112 @@ def get_matroids(r, n):
     # Iterate through power set of subsets
     for b in powerset(sets):
         
-        # Skip empty
+        # Don't use empty
         if not b:
             continue
-    
+
         # Make matroid, see if it is valid
         M = Matroid(bases=b)
-        if M.is_valid() and M.size() == n:
+        if M.size() == n and M.is_valid():
             res.append(M)
             
     # Remove isomorphic copies
     while len(res) > 0:
         res_2.append(res[0])
         res = [m for m in res[1:] if not m.is_isomorphic(res[0])]
-
     return res_2
 
 # Get the set of dependent matroid we would want
-M = get_matroids(3,5)
+M = get_matroids(4,6)
+
 M2 = [m for m in M if len(m.dependent_r_sets(2)) > 0]
   
 for i, m in enumerate(M2):
     print('Matroid index: {0}'.format(i))
-    compare_derivatives(3, m)
+    display_matroid(m, 4)
+
+
+# In[128]:
+
+
+# Finds D(42) and D(32) for fourth derivative
+# Create a graphic matroid
+G = Graph([(0,1,1), (0,1,2),(1,2,1),(2,3,1), (2,4,1),(3,4,1)], multiedges=True)
+G.plot().show()
+M = Matroid(G)
+display_matroid(M, 4)
+
+G2 = Graph([(0,1,1), (3,4,2),(1,2,1),(2,3,1), (2,4,1),(3,4,1)], multiedges=True)
+G2.plot().show()
+M2 = Matroid(G2)
+display_matroid(M2, 4)
+
+G3 = Graph([(0,1,1), (0,1,2),(1,2,1),(2,3,1), (3,4,1),(1,4,1)], multiedges=True)
+G3.plot().show()
+M3 = Matroid(G3)
+display_matroid(M3, 4)
+
+
+# In[ ]:
+
+
+# Finds D31 and D21 for fourth derivative
+
+
+# In[77]:
+
+
+def compute_fans(n):
+    for i in range(0, n+1):
+        if len(fan_tzfs) == i:
+            z = tzf_fan(i)
+            fan_tzfs.append(z)
+def tzf_wheel(n):
+    R.<s> = QQ['s']
+    
+    # cycle through some base cases ...
+    if (n == 0):
+        return 1
+    elif (n == 1):
+        return 1/(1+s)
+
+    # prepare the fans for recursion...
+    compute_fans(n-1)
+
+    single_sum = 0
+    for k in range(1, n):
+        single_sum += ((-s)/(s+1))^(n-k-1) * fan_tzfs[k]
+        
+    # Simplified binomial sum
+    non_fans = (((1-n)/(s+1)^n) * ((-s)^n-n*(-s-1)-1)) + ((n/(s+1)^n) * ((-s)^(n-1)-(n-1)*(-s-1)-1))
+    
+    # Note: the n = 2 triangle is a special case because the edges
+    # around the wheel do not form a closed path
+    if ( n > 2):
+        # Brute force add cyclic matroid final case
+        non_fans += ((-s)^n-1-n*(-s-1)) / ((n*s+n-1) * (s+1)^n)
+    elif (n == 2):
+        non_fans += 1/(1+s)
+
+    total = n * single_sum + non_fans
+
+    # scale the sum accordingly by the rank and size of the groundset
+    if (n > 2):
+        total = total * 1/(2*n*s + n)
+    elif (n == 2):
+        total = total / (3*s + 2)
+
+    return total
+
+
+# In[78]:
+
+
+tzf_wheel(6)
+
+
+# In[ ]:
+
+
+
 
