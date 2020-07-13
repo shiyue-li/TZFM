@@ -1,0 +1,14 @@
+#I found using Tutte polynomia faster to compute the characteristic polynomial than M.lattice_of_flats().characteristic_polynomial()
+
+def char(M,v=None):
+    R.<x> = QQ['x']
+    if v is None:
+        if M.full_rank()%2==0:
+            return M.tutte_polynomial(1-x,0)
+        else:
+            return -1*M.tutte_polynomial(1-x,0)
+    else:
+        if M.full_rank()%2 == 0:
+            return M.tutte_polynomial(1,0)
+        else:
+            return -1*M.tutte_polynomial(1,0)
