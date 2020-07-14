@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[30]:
+# In[1]:
 
 
 from itertools import combinations
 
-load("derivative.sage")
-load("matroidzeta.sage")
+load('derivative.sage')
+load('matroidzeta.sage')
+load('fan.sage')
 
 
-# In[31]:
+# In[2]:
 
 
 # Relax a matroid
@@ -45,47 +46,47 @@ def relax_circuit_hyperplane(M):
     
     return Matroid(bases=bases)
 
-# cdgh is the circuit-hyperplane to relax to get Vamos from NonVamos
-# NV = matroids.named_matroids.NonVamos()
-# V = relax_circuit_hyperplane(NV)
-# if V.is_isomorphic(matroids.named_matroids.Vamos()):
-#    print('NonVamos successfully relaxed to Vamos')
 
-# Get Pappus
-# P = matroids.named_matroids.Pappus()
-
-# Plot Pappus to find to relax
-# pos = {'a':(0,2), 'b': (1,2), 'c':(2,2), 'd':(0,0), 'e':(1,0), 'f':(2,0), 'g':(.5,1),'h':(1,1), 'i':(1.5,1)}
-# P.plot(pos_method=1, pos_dict=pos)
-
-# Relax Pappus and check
-# NP = relax_circuit_hyperplane(P)
-# if NP.is_isomorphic(matroids.named_matroids.NonPappus()):
-#    print('Pappus successfully relaxed to NonPappus')
-
-
-# In[32]:
+# In[3]:
 
 
 def dependent_sets_zeta(M, zeta=False):
     
-    # Print relevant information
-    print('Dependent sets per cardinality for M({0},{1}):'.format(M.rank(), M.size()), 
-          [len(M.dependent_r_sets(r)) for r in range(0, M.rank()+1)])
+    print('Matroid Rank: {0}, Matroid Size: {1}.'.format(M.rank(), M.size()))
+    print('Entry (i, j) is the number of cardinality j, rank i dependent sets (one indexed):')
+    
+    # Get array of 0s
+    res = [ [0] * (M.rank()+1) for _ in range(M.rank()) ]
+    
+    # Get dependent sets
+    dep_sets = [M.dependent_r_sets(r) for r in range(0, M.rank()+1)]
+    
+    # Split dependent sets by rank
+    for r, dep_set in enumerate(dep_sets):
+        for dep in dep_set:
+            res[M.rank(dep)][r] += 1
+    
+    # Print array
+    for row in res[1:]:
+        print(row[1:])
     
     if zeta:
         print('TZF for M: ', tzf(M))
 
 
-# In[33]:
+# In[4]:
 
 
-g = Matroid(Graph([(0,1,1), (0,1,2), (0,1,3), (1,2,1), (2,3,1)], multiedges=True))
-dependent_sets_zeta(g, True)
-compare_derivatives(3, g)
+# Displays a matroid
+def display_matroid(M, d):
+    if M.rank() <= 3:
+        M.plot().show()
+    compare_derivatives(d, M)
+    dependent_sets_zeta(M)
+    print('')
 
 
-# In[42]:
+# In[5]:
 
 
 # Gets all matroids of a given rank and ground set size (up to isomorphism)
@@ -101,120 +102,199 @@ def get_matroids(r, n):
     # Iterate through power set of subsets
     for b in powerset(sets):
         
-        # Skip empty
+        # Don't use empty
         if not b:
             continue
-    
+
         # Make matroid, see if it is valid
         M = Matroid(bases=b)
-        if M.is_valid() and M.size() == n:
+        if M.size() == n and M.is_valid():
             res.append(M)
             
     # Remove isomorphic copies
     while len(res) > 0:
         res_2.append(res[0])
         res = [m for m in res[1:] if not m.is_isomorphic(res[0])]
-
     return res_2
 
-from urllib.request import urlopen
-
-url_base = 'http://www-imai.is.s.u-tokyo.ac.jp/~ymatsu/matroid/database/'
-
-rank_1 = [None, 'allr1n01.txt', 'allr1n02.txt', 'allr1n03.txt', 'allr1n04.txt',
-    'allr1n05.txt', 'allr1n06.txt', 'allr1n07.txt', 'allr1n08.txt', 'allr1n09.txt',
-    'allr1n10.txt', 'allr1n11.txt', 'allr1n12.txt']
-
-rank_2 = [None, None, 'allr2n02.txt', 'allr2n03.txt', 'allr2n04.txt',
-    'allr2n05.txt', 'allr2n06.txt', 'allr2n07.txt', 'allr2n08.txt', 'allr2n09.txt',
-    'allr2n10.txt', 'allr2n11.txt', 'allr2n12.txt']
-
-rank_3 = [None, None, None, 'allr3n03.txt', 'allr3n04.txt',
-    'allr3n05.txt', 'allr3n06.txt', 'allr3n07.txt', 'allr3n08.txt', 'allr3n09.txt',
-    None, None, None]
-
-rank_4 = [None, None, None, None, 'allr4n04.txt',
-    'allr4n05.txt', 'allr4n06.txt', 'allr4n07.txt', 'allr4n08.txt', None,
-    None, None, None]
-
-extensions = [None, rank_1, rank_2, rank_3, rank_4]
-
-groundset = 'abcdefghijklm'
-
-# Get a list of non-isomorphic matroids of rank r on
-# n elements from Hiraishi's Database
-def get_matroids_database(r,n):
-    matroids = []
-    if (r <= 4 and n <= 12):
-        if not extensions[r][n]:
-            return matroids
-
-        # Open the relavent page in the database
-        link = url_base + extensions[r][n]
-        f = urlopen(link)
-        myfile = f.read().decode('utf-8')
-        # Split the html into RevLex lines
-        lines = myfile.split('\r\n')
-
-        # convert each nonzero RevLex into a matroid
-        for line in lines:
-            if line == '':
-                continue
-
-            M = Matroid(groundset[:n], line, rank=r)
-            if M.is_valid():
-                matroids.append(M)
-
-    return matroids
-
-rank_1_simple = [None, 'simpler1n01.txt', None, None, None, None, None, None, None,
-    None, None, None, None]
-
-rank_2_simple = [None, None, 'simpler2n02.txt', 'simpler2n03.txt', 'simpler2n04.txt',
-    'simpler2n05.txt', 'simpler2n06.txt', 'simpler2n07.txt', 'simpler2n08.txt',
-    'simpler2n09.txt', 'simpler2n10.txt', 'simpler2n11.txt', 'simpler2n12.txt']
-
-rank_3_simple = [None, None, None, 'simpler3n03.txt', 'simpler3n04.txt', 'simpler3n05.txt',
-    'simpler3n06.txt', 'simpler3n07.txt', 'simpler3n08.txt', 'simpler3n09.txt', 'simpler3n10.txt',
-    None, None]
-
-rank_4_simple = [None, None, None, None, 'simpler4n04.txt', 'simpler4n05.txt', 'simpler4n06.txt',
-    'simpler4n07.txt', 'simpler4n08.txt', None, None, None, None]
-
-simple_extensions = [None, rank_1_simple, rank_2_simple, rank_3_simple, rank_4_simple]
-
-# Get a list of non-isomorphic simple matroids of rank r on
-# n elements from Hiraishi's Database
-def get_simple_matroids_database(r,n):
-    matroids = []
-    if (r <= 4 and n <= 12):
-        if not simple_extensions[r][n]:
-            return matroids
-
-        # Open the relavent page in the database
-        link = url_base + simple_extensions[r][n]
-        f = urlopen(link)
-        myfile = f.read().decode('utf-8')
-        # Split the html into RevLex lines
-        lines = myfile.split('\n')
-
-        # convert each nonzero RevLex into a matroid
-        for line in lines:
-            if line == '':
-                continue
-
-            M = Matroid(groundset[:n], line, rank=r)
-            if M.is_valid():
-                matroids.append(M)
-
-    return matroids
-
-
 # Get the set of dependent matroid we would want
-M = get_matroids(3,5)
+M = get_matroids(4,6)
+
 M2 = [m for m in M if len(m.dependent_r_sets(2)) > 0]
   
 for i, m in enumerate(M2):
     print('Matroid index: {0}'.format(i))
-    compare_derivatives(3, m)
+    display_matroid(m, 4)
+
+
+# In[6]:
+
+
+# Finds D(42) and D(32) for fourth derivative
+# Create a graphic matroid
+G = Graph([(0,1,1), (0,1,2),(1,2,1),(2,3,1), (2,4,1),(3,4,1)], multiedges=True)
+G.plot().show()
+M = Matroid(G)
+display_matroid(M, 4)
+
+G2 = Graph([(0,1,1), (3,4,2),(1,2,1),(2,3,1), (2,4,1),(3,4,1)], multiedges=True)
+G2.plot().show()
+M2 = Matroid(G2)
+display_matroid(M2, 4)
+
+G3 = Graph([(0,1,1), (0,1,2),(1,2,1),(2,3,1), (3,4,1),(1,4,1)], multiedges=True)
+G3.plot().show()
+M3 = Matroid(G3)
+display_matroid(M3, 4)
+
+G4 = Graph([(0,1,1), (0,1,2),(1,2,1),(1,2,2), (2,3,1),(3,4,1)], multiedges=True)
+G4.plot().show()
+M4 = Matroid(G4)
+display_matroid(M4, 4)
+
+G5 = Graph([(0,1,1), (0,1,2),(0,1,3),(1,2,1), (2,3,1),(3,4,1)], multiedges=True)
+G5.plot().show()
+M5 = Matroid(G5)
+display_matroid(M5, 4)
+
+
+# In[7]:
+
+
+# More tests
+G6 = Graph([(0,1,1), (1,2,2),(0,2,1),(2,3,1), (3,4,1),(4,2,1)], multiedges=True)
+G6.plot().show()
+M6 = Matroid(G6)
+display_matroid(M6, 4)
+
+G7 = Graph([(0,1,1), (1,2,1),(1,2,2),(2,3,1), (3,4,1),(4,1,1)], multiedges=True)
+G7.plot().show()
+M7 = Matroid(G7)
+display_matroid(M7, 4)
+
+
+# In[8]:
+
+
+def compute_fans(n):
+    for i in range(0, n+1):
+        if len(fan_tzfs) == i:
+            z = tzf_fan(i)
+            fan_tzfs.append(z)
+def tzf_wheel(n):
+    R.<s> = QQ['s']
+    
+    # cycle through some base cases ...
+    if (n == 0):
+        return 1
+    elif (n == 1):
+        return 1/(1+s)
+
+    # prepare the fans for recursion...
+    compute_fans(n-1)
+
+    single_sum = 0
+    for k in range(1, n):
+        single_sum += ((-s)/(s+1))^(n-k-1) * fan_tzfs[k]
+        
+    # Simplified binomial sum
+    non_fans = (((1-n)/(s+1)^n) * ((-s)^n-n*(-s-1)-1)) + ((n/(s+1)^n) * ((-s)^(n-1)-(n-1)*(-s-1)-1))
+    
+    # Note: the n = 2 triangle is a special case because the edges
+    # around the wheel do not form a closed path
+    if ( n > 2):
+        # Brute force add cyclic matroid final case
+        non_fans += ((-s)^n-1-n*(-s-1)) / ((n*s+n-1) * (s+1)^n)
+    elif (n == 2):
+        non_fans += 1/(1+s)
+
+    total = n * single_sum + non_fans
+
+    # scale the sum accordingly by the rank and size of the groundset
+    if (n > 2):
+        total = total * 1/(2*n*s + n)
+    elif (n == 2):
+        total = total / (3*s + 2)
+
+    return total
+
+
+# In[9]:
+
+
+tzf_wheel(6)
+
+
+# In[10]:
+
+
+# Compute the toplogical zeta function for a matroid M via the
+# recurrence relation summing over all proper flats
+def tzf_recurrence(M):
+    R.<s> = QQ['s']
+
+    E = M.groundset()
+    rk = M.full_rank()
+    L = M.lattice_of_flats()
+    
+    # Compute base cases where the tzf is simple
+    if (len(E) == 1):
+        return rk * (1/(1+s))
+    elif (len(E) == 0):
+        return 1
+
+    # Sum over all proper flats of L(M)
+    sum_proper_flats = 0
+    for F in L:
+        if F == E:
+            continue
+
+        contraction = M.contract(F)
+        restriction = M.delete(E - F)
+
+        chi = x_M_reduced(contraction)
+        # Recall tzf_recurrence recursively for contracted matroids
+        sum_proper_flats += chi(1) * tzf_recurrence(restriction)
+
+    return 1/(len(E) * s + rk) * sum_proper_flats
+
+
+# In[14]:
+
+
+tzf_recurrence(matroids.PG(0,7))
+
+
+# In[111]:
+
+
+def tzf_PG_calc(r, q):
+    
+    R.<s> = QQ['s']
+    
+    # Add in initial value
+    tzf_PG = []
+    tzf_PG.append(1/(s+1))
+    
+    # Iterate through as many as we need
+    for i in (1..r):
+        summation = prod((1-q^j) for j in (1..i))
+        for k in (1..i):
+            
+            # Get value for reduced char poly
+            poch = prod((1-q^j) for j in (1..i-k))
+            summation += q_binomial(i+1, k, q) * poch * tzf_PG[k-1]
+        
+        # Add new value to list
+        total = summation / (q_binomial(i+1, 1, q)*s+ i+1)
+            
+        tzf_PG.append(total)
+                
+    return tzf_PG
+
+
+# In[112]:
+
+
+tzf_PG_calc(6,2)
 
