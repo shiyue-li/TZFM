@@ -15,8 +15,12 @@ def get_derivative_Z(n, Z):
 def chi_0_test(M,k):
     R.<x> = QQ['x']
     
+    
+    #d is the degree of truncation. It should be fixed
     d = 1
+    #i sets ith derivative of chi
     i=0
+    #j sets kth derivative of Z 
     j = 2
     L = M.lattice_of_flats()
     E = M.groundset()
