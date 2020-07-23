@@ -1,0 +1,44 @@
+def get_derivative(n, Z):
+    R.<x> = QQ['x']
+
+    for i in range(0, n):
+        Z = derivative(Z, x)
+    return Z
+def get_derivative_Z(n, Z):
+    R.<s> = QQ['s']
+
+    for i in range(0, n):
+        Z = derivative(Z, s)
+    return Z
+
+
+def chi_0_test(M,k):
+    R.<x> = QQ['x']
+    
+    d = 1
+    i=0
+    j = 2
+    L = M.lattice_of_flats()
+    E = M.groundset()
+    # Sum over all proper flats of L(M)
+    sum_proper_flats = 0
+    for F in L:
+        if F == E:
+            continue
+        
+        restriction = M.delete(E - F)
+        Z = tzf_recurrence(restriction)
+        R.<s> =QQ['s']
+        
+        Z = get_derivative_Z(j, Z)
+        
+        
+        contraction = M.contract(F)
+        chi = x_M_reduced(contraction)
+        chi = get_derivative(i, x_M(contraction))
+        if type(Z) is Integer:
+            sum_proper_flats += chi(k)/factorial(i) * Z
+        else:
+            sum_proper_flats += chi(k)/factorial(i) * Z(s= 0)
+
+    return sum_proper_flats
