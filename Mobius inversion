@@ -59,6 +59,8 @@ def chi_0_test(M,k=0):
 
     return sum_proper_flats
 
+
+#the function g. I wrote this to test the sum for arbitrary upper bound other than E
 def tf_g(M, F=M.groundset(),k=0):
     #print(M)
     E = M.groundset()
