@@ -12,37 +12,57 @@ def get_derivative_Z(n, Z):
     return Z
 
 
-def chi_0_test(M,k):
+def chi_0_test(M,k=0):
     R.<x> = QQ['x']
     
     
     #d is the degree of truncation. It should be fixed
     d = 1
-    #i sets ith derivative of chi
+    #i sets ith derivative of chi. It should also be fixed
     i=0
     #j sets kth derivative of Z 
-    j = 2
+    j_1 =0
+    j_2 = 0
+    
     L = M.lattice_of_flats()
     E = M.groundset()
     # Sum over all proper flats of L(M)
+    
     sum_proper_flats = 0
     for F in L:
         if F == E:
             continue
         
         restriction = M.delete(E - F)
-        Z = tzf_recurrence(restriction)
-        R.<s> =QQ['s']
-        
-        Z = get_derivative_Z(j, Z)
+        Z_1 = tzf_recurrence(restriction)
+        #R.<s> =QQ['s']
+        temp = Z_1
+        Z_2 = 1
+        Z_1 = get_derivative_Z(j_1, temp)
+        #Z_2 = get_derivative_Z(j_2, temp)
         
         
         contraction = M.contract(F)
         chi = x_M_reduced(contraction)
         chi = get_derivative(i, x_M(contraction))
-        if type(Z) is Integer:
-            sum_proper_flats += chi(k)/factorial(i) * Z
+        
+        if type(Z_1) is Integer:
+            if type(Z_2) is Integer:
+                sum_proper_flats += chi(k)/factorial(i)*Z_1*Z_2
+            else:
+                sum_proper_flats += chi(k)/factorial(i)*Z_1*Z_2(s=0)
         else:
-            sum_proper_flats += chi(k)/factorial(i) * Z(s= 0)
+            if type(Z_2) is Integer:
+                sum_proper_flats += chi(k)/factorial(i)*Z_1(s=0)*Z_2
+            else:
+                sum_proper_flats += chi(k)/factorial(i)*Z_1(s=0)*Z_2(s=0)
 
     return sum_proper_flats
+
+def tf_g(M, F=M.groundset(),k=0):
+    #print(M)
+    E = M.groundset()
+    restriction = M
+    if M != frozenset({}):
+        restriction = M.delete(E - F)
+    return chi_0_test(restriction,k)
