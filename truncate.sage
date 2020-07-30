@@ -29,6 +29,7 @@ def stirling(n, k):
     return 1 / factorial(k) * sum
 
 # the malevolent sum from the conjecture...
+# 1 < j < k
 def check_sum(k, j):
     sum = 0
     a = elem_symmetric(k-1)
