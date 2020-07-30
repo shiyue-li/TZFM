@@ -2,7 +2,7 @@ load('gamma.sage')
 import itertools
 
 def findsubsets(s, n): 
-    return list(itertools.combinations(s, n)) 
+    return list(itertools.combinations(s, n))
 
 def convert(s): 
     str1 = ""    
@@ -13,22 +13,29 @@ def convert(s):
 # contain a given size three circuit
 def get_four_circuits(ground_set, three_circuits):
     four_circuits = []
-    
+
     four_subsets = findsubsets(ground_set, 4)
     for S in four_subsets:
         contains_circuit = False
         for C in three_circuits:
-        	# check if C \subseteq S
+            # check if C \subseteq S
             contains_circuit = contains_circuit or all(x in S for x in C)
         if not contains_circuit:
-        	# this isn't a circuit!
+            # this isn't a circuit!
             four_circuits.append(convert(S))
     return four_circuits
 
 # find a rank 3 (simple) matroid by inputting the ground set
-# and size three circuits -> i.e. given a ground set and a 
-# list of lines, find me the rank 3 matroid
-def get_simple_3_matroid(ground_set, three_circuits):
+# and lines (with at least three elements)
+def get_simple_3_matroid(ground_set, lines):
+	# compute the three-element circuits i.e. the subsets
+	# of any line
+    three_circuits = []
+    for l in lines:
+        subsets = findsubsets(l, 3)
+        for S in subsets:
+        	three_circuits.append(convert(S))
+
     four_circuits = get_four_circuits(ground_set, three_circuits)
     circuits = three_circuits + four_circuits
     return Matroid(groundset=ground_set, circuits=circuits)
