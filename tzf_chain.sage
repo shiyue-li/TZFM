@@ -3,8 +3,9 @@ def tzf_chain(M):
     
     res = 0
     
-    # Get chains
-    chains = [x for x in list(M.lattice_of_flats().chains()) if x and x[0] == frozenset()]
+    # Get lattice of flats and chains
+    L = M.lattice_of_flats()
+    chains = [x for x in list(L.chains()) if x and x[0] == frozenset()]
 
     # Calculate coefficient from rank function
     R.<s> = QQ['s']
