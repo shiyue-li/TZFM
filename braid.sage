@@ -74,5 +74,28 @@ for i in range(1, m + 1):
 	#print(z)
 	braid_tzfs.append(z)
 
-
-
+# Computes the first m braid matroid gamma function
+def braid_gamma(m):
+    
+    R.<s> = QQ['s']
+    res = 0
+    
+    braids = [1, 1, -s/(s+1)]
+    
+    for n in (3..m):
+        total = 0
+        for k in (2..n):
+            
+            dictionary = {}
+            for i in (0..n-k):
+                dictionary['x{}'.format(i)] = braids[i+1]
+            
+            bell = bell_polynomial(n, k)
+            if k != n:
+                total += bell(**dictionary) * (n*(n-1)/2*s + n-k)
+            else:
+                total += n*(n-1)/2*s + n-k
+        
+        braids.append(-1/(n*(n-1)/2*s +n-1) * total)
+    
+    return braids
